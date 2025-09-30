@@ -1,0 +1,52 @@
+SELECT
+    lc.COMPANY_SHORT_NAME AS SBU,
+    lb.SHORT_NAME AS BUYER,
+    bb.BRAND_NAME AS BUYER_BRAND,
+    wpdm.JOB_NO, 
+    SUM(wpcsb.ORDER_QUANTITY) AS ORDER_QTY,
+    ('' || SUM(wpcsb.ORDER_TOTAL)) AS FOB_VALUE,
+
+    -- Separate columns for each EMB_NAME type
+    SUM(CASE WHEN pecd.EMB_NAME = 1 THEN wpcsb.ORDER_QUANTITY ELSE 0 END) AS PRINTING,
+    SUM(CASE WHEN pecd.EMB_NAME = 2 THEN wpcsb.ORDER_QUANTITY ELSE 0 END) AS EMBROIDERY,
+    SUM(CASE WHEN pecd.EMB_NAME = 3 THEN wpcsb.ORDER_QUANTITY ELSE 0 END) AS WASH,
+    SUM(CASE WHEN pecd.EMB_NAME = 4 THEN wpcsb.ORDER_QUANTITY ELSE 0 END) AS SPECIAL_WORKS,
+    SUM(CASE WHEN pecd.EMB_NAME = 5 THEN wpcsb.ORDER_QUANTITY ELSE 0 END) AS GMTS_DYEING,
+    SUM(CASE WHEN pecd.EMB_NAME = 6 THEN wpcsb.ORDER_QUANTITY ELSE 0 END) AS ATTACHMENT,
+    SUM(CASE WHEN pecd.EMB_NAME = 99 THEN wpcsb.ORDER_QUANTITY ELSE 0 END) AS OTHERS,
+
+    pecd.RATE,
+    SUM(wpcsb.ORDER_QUANTITY * pecd.RATE) AS EMB_VALUE  
+
+FROM 
+    WO_PO_DETAILS_MASTER wpdm
+JOIN 
+    WO_PO_BREAK_DOWN wpbd ON wpdm.JOB_NO = wpbd.JOB_NO_MST
+JOIN 
+    LIB_BUYER lb ON wpdm.BUYER_NAME = lb.ID
+JOIN 
+    LIB_COMPANY lc ON wpdm.COMPANY_NAME = lc.ID
+LEFT JOIN 
+    LIB_BUYER_BRAND bb ON wpdm.BRAND_ID = bb.ID
+LEFT JOIN
+    WO_PO_COLOR_SIZE_BREAKDOWN wpcsb ON wpdm.JOB_NO = wpcsb.JOB_NO_MST
+LEFT JOIN 
+    WO_PRE_COST_EMBE_COST_DTLS pecd ON wpdm.JOB_NO = pecd.JOB_NO  
+
+WHERE 
+    wpdm.Is_deleted = 0
+    AND wpdm.status_active = 1
+    AND wpbd.Is_deleted = 0
+    AND wpbd.status_active = 1
+    AND lc.ID IN (1, 2)
+    AND pecd.RATE > 0   
+
+GROUP BY 
+    lc.COMPANY_SHORT_NAME,
+    lb.SHORT_NAME, 
+    bb.BRAND_NAME, 
+    wpdm.JOB_NO,
+    pecd.RATE  
+
+ORDER BY 
+    wpdm.JOB_NO
