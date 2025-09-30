@@ -4,7 +4,7 @@ SELECT
     bb.BRAND_NAME AS BUYER_BRAND,
     wpdm.JOB_NO, 
     SUM(wpcsb.ORDER_QUANTITY) AS ORDER_QTY,
-    ('$' || SUM(wpcsb.ORDER_TOTAL)) AS FOB_VALUE,
+    ('' || SUM(wpcsb.ORDER_TOTAL)) AS FOB_VALUE,
     
     -- Mapping EMB_NAME based on the numeric codes
     CASE 
@@ -26,25 +26,31 @@ SELECT
 FROM 
     WO_PO_DETAILS_MASTER wpdm
 JOIN 
-    WO_PO_BREAK_DOWN wpbd ON wpdm.JOB_NO = wpbd.JOB_NO_MST
+    WO_PO_BREAK_DOWN wpbd 
+    ON wpdm.JOB_NO = wpbd.JOB_NO_MST
 JOIN 
-    LIB_BUYER lb ON wpdm.BUYER_NAME = lb.ID
+    LIB_BUYER lb 
+    ON wpdm.BUYER_NAME = lb.ID
 JOIN 
-    LIB_COMPANY lc ON wpdm.COMPANY_NAME = lc.ID
+    LIB_COMPANY lc 
+    ON wpdm.COMPANY_NAME = lc.ID
 LEFT JOIN 
-    LIB_BUYER_BRAND bb ON wpdm.BRAND_ID = bb.ID
+    LIB_BUYER_BRAND bb 
+    ON wpdm.BRAND_ID = bb.ID
 LEFT JOIN
-    WO_PO_COLOR_SIZE_BREAKDOWN wpcsb ON wpdm.JOB_NO = wpcsb.JOB_NO_MST
+    WO_PO_COLOR_SIZE_BREAKDOWN wpcsb 
+    ON wpdm.JOB_NO = wpcsb.JOB_NO_MST
 LEFT JOIN 
-    WO_PRE_COST_EMBE_COST_DTLS pecd ON wpdm.JOB_NO = pecd.JOB_NO  
+    WO_PRE_COST_EMBE_COST_DTLS pecd 
+    ON wpdm.JOB_NO = pecd.JOB_NO  
+
 WHERE 
     wpdm.Is_deleted = 0
     AND wpdm.status_active = 1
     AND wpbd.Is_deleted = 0
     AND wpbd.status_active = 1
     AND lc.ID IN (1, 2)
-    AND pecd.RATE IS NOT NULL  
-    AND pecd.RATE > 0          
+    AND pecd.RATE > 0   
 GROUP BY 
     lc.COMPANY_SHORT_NAME,
     lb.SHORT_NAME, 
